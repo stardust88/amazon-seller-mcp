@@ -1,0 +1,128 @@
+{
+  "manifest_version": "0.3",
+  "name": "amazon-spapi",
+  "display_name": "Amazon SP-API",
+  "version": "1.1.1",
+  "description": "Pull Amazon Selling Partner API data - listings, orders, returns, sales and traffic - to local files.",
+  "long_description": "Runs locally and holds your SP-API credentials on your own machine. Scoped to the Inventory and Order Tracking and Brand Analytics roles: merchant-fulfilled listings, orders, returns, and Brand Analytics reports. Includes probe_access, which empirically tests what your authorization actually permits, and fast Orders API tools that return in seconds rather than going through the report queue. Reports are saved as dated files in your chosen output folder; tools return only a small preview, so a large catalogue never floods the conversation. Connect the same output folder in Claude to read the full files.",
+  "author": {
+    "name": "Debrup"
+  },
+  "license": "MIT",
+  "keywords": ["amazon", "sp-api", "selling-partner", "fba", "inventory", "reports"],
+  "server": {
+    "type": "python",
+    "entry_point": "server/spapi_server.py",
+    "mcp_config": {
+      "command": "${user_config.python_path}",
+      "args": ["${__dirname}/server/spapi_server.py"],
+      "env": {
+        "LWA_CLIENT_ID": "${user_config.lwa_client_id}",
+        "LWA_CLIENT_SECRET": "${user_config.lwa_client_secret}",
+        "LWA_REFRESH_TOKEN": "${user_config.lwa_refresh_token}",
+        "SPAPI_REGION": "${user_config.spapi_region}",
+        "SPAPI_MARKETPLACE_ID": "${user_config.spapi_marketplace_id}",
+        "OUTPUT_DIR": "${user_config.output_dir}",
+        "SPAPI_TIMEZONE": "${user_config.spapi_timezone}",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "whoami",
+      "description": "Verify credentials, region and marketplace without pulling any report data."
+    },
+    {
+      "name": "probe_access",
+      "description": "Empirically test which reports and endpoints this authorization actually permits."
+    },
+    {
+      "name": "list_report_types",
+      "description": "List the report keys this server can pull, grouped by the role each needs."
+    },
+    {
+      "name": "list_saved_reports",
+      "description": "List report files already downloaded to the output folder."
+    },
+    {
+      "name": "pull_report",
+      "description": "Pull one report over any span, auto-splitting past Amazon's 30/60-day caps."
+    },
+    {
+      "name": "pull_standard_set",
+      "description": "Pull the merchant-fulfilled set: listings, orders, returns, sales and traffic."
+    },
+    {
+      "name": "list_orders",
+      "description": "List recent orders via the Orders API - returns in seconds, not minutes."
+    },
+    {
+      "name": "get_order_items",
+      "description": "Get the line items for a single order: SKU, ASIN, quantity, item price."
+    },
+    {
+      "name": "sales_metrics",
+      "description": "Aggregated order count, units and revenue per time bucket from the Sales API."
+    }
+  ],
+  "user_config": {
+    "python_path": {
+      "type": "file",
+      "title": "Python interpreter",
+      "description": "Full path to the python.exe that has requests, python-dotenv and mcp installed.",
+      "required": true,
+      "default": "C:\\Users\\Dev\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+    },
+    "lwa_client_id": {
+      "type": "string",
+      "title": "LWA Client ID",
+      "description": "From Amazon Developer Central, your private app. Starts with amzn1.application-oa2-client.",
+      "required": true,
+      "sensitive": true
+    },
+    "lwa_client_secret": {
+      "type": "string",
+      "title": "LWA Client Secret",
+      "description": "From Amazon Developer Central. Starts with amzn1.oa2-cs.v1.",
+      "required": true,
+      "sensitive": true
+    },
+    "lwa_refresh_token": {
+      "type": "string",
+      "title": "LWA Refresh Token",
+      "description": "From self-authorizing your own app. Starts with Atzr|.",
+      "required": true,
+      "sensitive": true
+    },
+    "spapi_region": {
+      "type": "string",
+      "title": "SP-API region",
+      "description": "na = North America | eu = Europe, UK, India, Middle East | fe = Japan, Australia, Singapore.",
+      "required": true,
+      "default": "eu"
+    },
+    "spapi_marketplace_id": {
+      "type": "string",
+      "title": "Marketplace",
+      "description": "Country code (IN, US, UK, DE, AE...) or a raw marketplace id. Comma-separate for several in the same region.",
+      "required": true,
+      "default": "IN"
+    },
+    "output_dir": {
+      "type": "directory",
+      "title": "Report output folder",
+      "description": "Where downloaded reports are saved. Connect this same folder in Claude so it can read the full files.",
+      "required": true,
+      "default": "${HOME}"
+    },
+    "spapi_timezone": {
+      "type": "string",
+      "title": "Time zone for sales metrics",
+      "description": "IANA time zone used to bucket Sales API metrics, e.g. Asia/Kolkata. UTC if unsure.",
+      "required": false,
+      "default": "Asia/Kolkata"
+    }
+  }
+}
